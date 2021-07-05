@@ -4,19 +4,24 @@
     mysqli_report(MYSQLI_REPORT_ERROR | MYSQLI_REPORT_STRICT);
     session_start();
     require_once 'config.php';
-    $login = $_POST['login'];
-    $password = $_POST['password'];
-    $check_user = $mysql->query("SELECT id, login, year_of_birth, password, number FROM users WHERE login='$login' AND password='$password'");
-    if (mysqli_num_rows($check_user) > 0) {
-      $user = mysqli_fetch_assoc($check_user);
+    $form_login = $_POST['login'];
+    $form_password = $_POST['password'];
+
+    $query = $mysql->prepare("SELECT id, login, year_of_birth, password, number FROM users WHERE login=? AND password=?");
+    $query->bind_param($form_login, $form_password);
+    $query->execute();
+    $query->bind_result($id, $login, $year_of_birth, $password, $number);
+    $query->fetch();
+
+    if ($id > 0) {
       $_SESSION['user'] = [
-        "id" => $user['id'],
-        "login" => $user['login'],
-        "year_of_birth" => $user['year_of_birth'],
-        "number" => $user['number']
+        "id" => $id,
+        "login" => $login,
+        "year_of_birth" => $year_of_birth,
+        "number" => $number
       ];
-        if($user['password'] === $password){
-            setcookie("id", $user['id'], time()+900, "../");
+        if($password === $form_password{
+            setcookie("id", $id, time()+900, "../");
             header('Location: ../profile.php');
         }
     } else {
